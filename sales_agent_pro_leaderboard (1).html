@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Agent Pro - XP Leaderboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1e3a8a;
+        }
+        .header h1 {
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #4b5563;
+        }
+        .leaderboard {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .leaderboard-header {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 60px 1fr 120px 100px;
+            font-weight: bold;
+        }
+        .leaderboard-body {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .user-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 120px 100px;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .user-row:last-child {
+            border-bottom: none;
+        }
+        .user-row:nth-child(even) {
+            background-color: #f3f4f6;
+        }
+        .rank {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .top-rank {
+            font-size: 18px;
+        }
+        .rank-1 {
+            color: gold;
+        }
+        .rank-2 {
+            color: silver;
+        }
+        .rank-3 {
+            color: #cd7f32; /* bronze */
+        }
+        .user-name {
+            display: flex;
+            align-items: center;
+        }
+        .avatar {
+            width: 30px;
+            height: 30px;
+            background-color: #ddd;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #555;
+        }
+        .xp {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-weight: bold;
+        }
+        .level {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e5e7eb;
+            border-radius: 12px;
+            padding: 4px 8px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .button {
+            background-color: #1e3a8a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #1c2d69;
+        }
+        .form {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .form-row {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .form-row label {
+            width: 120px;
+            padding-right: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .form-row input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sales Agent Pro</h1>
+        <p>XP Leaderboard - Track your progress against other participants</p>
+    </div>
+
+    <div class="leaderboard">
+        <div class="leaderboard-header">
+            <div>Rank</div>
+            <div>User</div>
+            <div>XP</div>
+            <div>Level</div>
+        </div>
+        <div class="leaderboard-body" id="leaderboard-body">
+            <!-- User rows will be added here dynamically -->
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="button" id="export-btn">Export Data</button>
+        <button class="button" id="clear-btn">Clear All Data</button>
+    </div>
+
+    <div class="form">
+        <h2>Add or Update User</h2>
+        <div class="form-row">
+            <label for="username">Username:</label>
+            <input type="text" id="username" placeholder="Enter username">
+        </div>
+        <div class="form-row">
+            <label for="xp">XP Amount:</label>
+            <input type="number" id="xp" placeholder="Enter XP amount">
+        </div>
+        <button class="button" id="add-user-btn">Add/Update User</button>
+    </div>
+
+    <script>
+        let userData = [
+            { username: "JohnSales", xp: 1250 },
+            { username: "SarahPro", xp: 980 },
+            { username: "MikeCloser", xp: 1560 },
+            { username: "AmyDeals", xp: 650 },
+            { username: "TomPitch", xp: 1120 }
+        ];
+
+        function loadData() {
+            const savedData = localStorage.getItem('salesAgentProLeaderboard');
+            if (savedData) userData = JSON.parse(savedData);
+            renderLeaderboard();
+        }
+
+        function saveData() {
+            localStorage.setItem('salesAgentProLeaderboard', JSON.stringify(userData));
+        }
+
+        function calculateLevel(xp) {
+            return Math.floor(Math.sqrt(xp / 100)) + 1;
+        }
+
+        function renderLeaderboard() {
+            const sortedUsers = [...userData].sort((a, b) => b.xp - a.xp);
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            leaderboardBody.innerHTML = '';
+            sortedUsers.forEach((user, index) => {
+                const rank = index + 1;
+                const level = calculateLevel(user.xp);
+                const row = document.createElement('div');
+                row.className = 'user-row';
+                const rankClass = rank <= 3 ? ` top-rank rank-${rank}` : '';
+                const initials = user.username.slice(0, 2).toUpperCase();
+                row.innerHTML = `
+                    <div class="rank${rankClass}">${rank}</div>
+                    <div class="user-name">
+                        <div class="avatar">${initials}</div>
+                        ${user.username}
+                    </div>
+                    <div class="xp">${user.xp.toLocaleString()}</div>
+                    <div class="level">Lvl ${level}</div>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        function addOrUpdateUser() {
+            const username = document.getElementById('username').value.trim();
+            const xpInput = document.getElementById('xp').value.trim();
+            if (!username || !xpInput) {
+                alert('Please enter both username and XP amount');
+                return;
+            }
+            const xp = parseInt(xpInput, 10);
+            if (isNaN(xp) || xp < 0) {
+                alert('Please enter a valid XP amount');
+                return;
+            }
+            const existingUserIndex = userData.findIndex(user => user.username.toLowerCase() === username.toLowerCase());
+            if (existingUserIndex !== -1) userData[existingUserIndex].xp = xp;
+            else userData.push({ username, xp });
+            saveData();
+            renderLeaderboard();
+            document.getElementById('username').value = '';
+            document.getElementById('xp').value = '';
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(userData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = 'sales_agent_pro_leaderboard.json';
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        function clearData() {
+            if (confirm('Are you sure you want to clear all leaderboard data? This cannot be undone.')) {
+                userData = [];
+                saveData();
+                renderLeaderboard();
+            }
+        }
+
+        document.getElementById('add-user-btn').addEventListener('click', addOrUpdateUser);
+        document.getElementById('export-btn').addEventListener('click', exportData);
+        document.getElementById('clear-btn').addEventListener('click', clearData);
+
+        loadData();
+    </script>
+</body>
+</html>
